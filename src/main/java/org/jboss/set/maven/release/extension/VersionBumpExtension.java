@@ -126,13 +126,11 @@ public class VersionBumpExtension extends AbstractMavenLifecycleParticipant {
 
         if (!shouldSkip(session)) {
             // NOTE: iterate over artifacts/deps and find most recent version available in repos
-            // TODO: inject channels into this, as now it will just consume whole repo, its fine as long as it is sanitazed
             configure();
 
             // NOTE: to handle ALL modules. Those are different "projects"
             for (MavenProject mavenProject : session.getAllProjects()) {
                 // TODO: debug and check if this will cover dep/parent projects
-                // TODO: determine if we need to update every project?
                 logger.info("[VBE][PROCESSING]   Project {}:{}", mavenProject.getGroupId(), mavenProject.getArtifactId());
                 if (mavenProject.getDependencyManagement() != null) {
                     processProject(mavenProject);
@@ -228,12 +226,12 @@ public class VersionBumpExtension extends AbstractMavenLifecycleParticipant {
             try {
                 result = this.channelSession.resolveDirectMavenArtifact(dependency.getGroupId(), dependency.getArtifactId(),dependency.getType(), null, nextVersion.getVersion());
             } catch (UnresolvedMavenArtifactException e) {
-                if(logger.isDebugEnabled()) {
-                    logger.info("[VBE] {}:{}, failed to resolve dependency{} {}:{}:{}", mavenProject.getGroupId(),
+                if(logger.isTraceEnabled()) {
+                    logger.trace("[VBE] {}:{}, failed to resolve dependency{} {}:{}:{}", mavenProject.getGroupId(),
                             mavenProject.getArtifactId(), managed ? "(M)" : "", dependency.getGroupId(), dependency.getArtifactId(),
                             nextVersion.getVersion(), e);
                 } else {
-                    logger.info("[VBE] {}:{}, failed to resolve dependency{} {}:{}", mavenProject.getGroupId(),
+                    logger.debug("[VBE] {}:{}, failed to resolve dependency{} {}:{}", mavenProject.getGroupId(),
                             mavenProject.getArtifactId(), managed ? "(M)" : "", dependency.getGroupId(), dependency.getArtifactId(),
                             nextVersion.getVersion());
                 }
@@ -241,7 +239,7 @@ public class VersionBumpExtension extends AbstractMavenLifecycleParticipant {
                 return;
             }
 
-            logger.info("[VBE] {}:{}, updating dependency{} {}:{}  {}-->{}", mavenProject.getGroupId(),
+            logger.debug("[VBE] {}:{}, updating dependency{} {}:{}  {}-->{}", mavenProject.getGroupId(),
                     mavenProject.getArtifactId(), managed ? "(M)" : "", dependency.getGroupId(), dependency.getArtifactId(),
                     dependency.getVersion(), nextVersion.getVersion());
             // NOTE: from this point on dependency is has changed
@@ -295,78 +293,35 @@ public class VersionBumpExtension extends AbstractMavenLifecycleParticipant {
             final Matcher oldVersionMatcher = pattern.matcher(possibleUpdate.getOldVersion());
             if(!(newVersionMatcher.find() && oldVersionMatcher.find())) {
                 //some artifacts have timestamp versions...
-                logger.info("[VBE] {}:{}, nom major.minor.micro versioning!!! {}:{} {}<->{}",
+                logger.warn("[VBE] {}:{}, non major.minor.micro versioning!!! {}:{} {}<->{}",
                         mavenProject.getGroupId(), mavenProject.getArtifactId(),
                         dependency.getGroupId(), dependency.getArtifactId(), possibleUpdate.getOldVersion(),
                         possibleUpdate.getVersion());
                 return;
             } else if (VersionMatcher.COMPARATOR.compare(possibleUpdate.getVersion(), possibleUpdate.getOldVersion()) > 0) {
-                logger.info("[VBE] {}:{}, possible update for dependency {}:{} {}->{}",
+                logger.debug("[VBE] {}:{}, possible update for dependency {}:{} {}->{}",
                         mavenProject.getGroupId(), mavenProject.getArtifactId(),
                         dependency.getGroupId(), dependency.getArtifactId(), possibleUpdate.getOldVersion(),
                         possibleUpdate.getVersion());
                 versionConsumer.accept(possibleUpdate);
                 return;
             } else {
-                logger.info("[VBE] {}:{}, no viable version found for update {}:{} {}<->{}",
+                logger.debug("[VBE] {}:{}, no viable version found for update {}:{} {}<->{}",
                         mavenProject.getGroupId(), mavenProject.getArtifactId(),
                         dependency.getGroupId(), dependency.getArtifactId(), possibleUpdate.getOldVersion(),
                         possibleUpdate.getVersion());
                 return;
             }
         } catch (Exception e) {
-            if(logger.isDebugEnabled()) {
-                logger.error("[VBE] {}:{}, failed to fetch info for {}:{} -> {}", mavenProject.getGroupId(),
+            if(logger.isTraceEnabled()) {
+                logger.trace("[VBE] {}:{}, failed to fetch info for {}:{} -> {}", mavenProject.getGroupId(),
                         mavenProject.getArtifactId(), dependency.getGroupId(), dependency.getArtifactId(), e);
             } else {
-                logger.error("[VBE] {}:{}, failed to fetch info for {}:{}", mavenProject.getGroupId(),
+                logger.debug("[VBE] {}:{}, failed to fetch info for {}:{}", mavenProject.getGroupId(),
                         mavenProject.getArtifactId(), dependency.getGroupId(), dependency.getArtifactId());
             }
             return;
         }
-    }
-
-    private boolean prefixMatch(final String[] v1, final String[] v2) {
-        for(int i=0;i<v1.length-1;i++) {
-            if(!v1[i].equals(v2[i])) {
-                return false;
-            }
-        }
-        return true;
-    }
-    private String createVersionRangeUpdate(final String[] arr) {
-        String[] copiedArray = Arrays.copyOfRange(arr, 0,arr.length-1);
-        copiedArray[copiedArray.length-1] = Integer.toString(Integer.parseInt(copiedArray[copiedArray.length-1])+1);
-        return String.join(".",copiedArray);
-    }
-
-    private void rangeLookup(final VBEVersionUpdate possibleUpdate, final String[] oldVErsionSplit) {
-        final String lookUpRange = "["+possibleUpdate.getOldVersion()+","+createVersionRangeUpdate(oldVErsionSplit)+")";
-        Artifact artifact = new DefaultArtifact(possibleUpdate.getGroupId(), possibleUpdate.getArtifactId(), null, possibleUpdate.getType(), lookUpRange);
-        VersionRangeRequest versionRangeRequest = new VersionRangeRequest();
-        versionRangeRequest.setArtifact(artifact);
-        versionRangeRequest.setRepositories(repositories);
-
-        try {
-            VersionRangeResult versionRangeResult = repo.resolveVersionRange(session.getRepositorySession(),
-                    versionRangeRequest);
-            Optional<String> thePossibility = versionRangeResult.getVersions().stream().map(Version::toString)
-                    .sorted(COMPARATOR.reversed())
-                    .findFirst();
-            if(thePossibility.isPresent()) {
-                possibleUpdate.setVersion(thePossibility.get());
-            }
-        } catch (VersionRangeResolutionException e) {
-            //Do nothing?
-            if(logger.isDebugEnabled()) {
-                logger.error("[VBE] {}:{}, failed to fetch range for {}:{} -> {}", session.getCurrentProject().getGroupId(),
-                        session.getCurrentProject().getArtifactId(), possibleUpdate.getGroupId(), possibleUpdate.getArtifactId(), e);
-            }
-        }
-    }
-
-    private boolean shouldProcess(final Dependency dependency) {
-        return true;
     }
 
     private boolean shouldSkip(MavenSession session) {
