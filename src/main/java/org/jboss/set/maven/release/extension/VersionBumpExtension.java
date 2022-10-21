@@ -68,7 +68,6 @@ import org.eclipse.aether.resolution.VersionRangeResolutionException;
 import org.eclipse.aether.resolution.VersionRangeResult;
 import org.eclipse.aether.version.Version;
 import org.jboss.set.maven.release.extension.log.ReportFile;
-import org.jboss.set.maven.release.extension.version.InsaneVersionComparator;
 import org.slf4j.Logger;
 import org.wildfly.channel.Channel;
 import org.wildfly.channel.ChannelMapper;
@@ -76,6 +75,7 @@ import org.wildfly.channel.ChannelSession;
 import org.wildfly.channel.MavenArtifact;
 import org.wildfly.channel.UnresolvedMavenArtifactException;
 import org.wildfly.channel.maven.VersionResolverFactory;
+import org.wildfly.channel.version.VersionMatcher;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -300,7 +300,7 @@ public class VersionBumpExtension extends AbstractMavenLifecycleParticipant {
                         dependency.getGroupId(), dependency.getArtifactId(), possibleUpdate.getOldVersion(),
                         possibleUpdate.getVersion());
                 return;
-            } else if (InsaneVersionComparator.INSTANCE.compare(possibleUpdate.getVersion(), possibleUpdate.getOldVersion()) > 0) {
+            } else if (VersionMatcher.COMPARATOR.compare(possibleUpdate.getVersion(), possibleUpdate.getOldVersion()) > 0) {
                 logger.info("[VBE] {}:{}, possible update for dependency {}:{} {}->{}",
                         mavenProject.getGroupId(), mavenProject.getArtifactId(),
                         dependency.getGroupId(), dependency.getArtifactId(), possibleUpdate.getOldVersion(),
