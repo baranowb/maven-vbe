@@ -25,15 +25,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.eclipse.aether.repository.RemoteRepository;
-import org.eclipse.aether.resolution.MetadataResult;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * Class to hold everything
- * 
+ *
  * @author baranowb
  *
  */

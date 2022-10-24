@@ -21,8 +21,6 @@
  */
 package org.jboss.set.maven.release.extension;
 
-import static org.wildfly.channel.version.VersionMatcher.COMPARATOR;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,7 +34,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
@@ -60,13 +57,7 @@ import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.configuration.xml.XmlPlexusConfiguration;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.RepositorySystem;
-import org.eclipse.aether.artifact.Artifact;
-import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.repository.RemoteRepository;
-import org.eclipse.aether.resolution.VersionRangeRequest;
-import org.eclipse.aether.resolution.VersionRangeResolutionException;
-import org.eclipse.aether.resolution.VersionRangeResult;
-import org.eclipse.aether.version.Version;
 import org.jboss.set.maven.release.extension.log.ReportFile;
 import org.slf4j.Logger;
 import org.wildfly.channel.Channel;
@@ -208,7 +199,7 @@ public class VersionBumpExtension extends AbstractMavenLifecycleParticipant {
 
     /**
      * Update dependency if possible and/or desired.
-     * 
+     *
      * @param mavenProject
      * @param dependency
      * @param managed
@@ -235,7 +226,7 @@ public class VersionBumpExtension extends AbstractMavenLifecycleParticipant {
                             mavenProject.getArtifactId(), managed ? "(M)" : "", dependency.getGroupId(), dependency.getArtifactId(),
                             nextVersion.getVersion());
                 }
-                
+
                 return;
             }
 
@@ -274,7 +265,7 @@ public class VersionBumpExtension extends AbstractMavenLifecycleParticipant {
 
     /**
      * Perform metadata look up and determine if there is more recent version. If there is, pass it to consumer.
-     * 
+     *
      * @param dependency
      * @param versionConsumer
      */

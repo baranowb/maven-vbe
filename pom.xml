@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.jboss</groupId>
@@ -13,6 +15,7 @@
 
 
 	<properties>
+		<version.org.wildfly.checkstyle-config>1.0.8.Final</version.org.wildfly.checkstyle-config>
 		<version.maven.plugin.api>3.8.2</version.maven.plugin.api>
 		<version.maven.core>3.8.2</version.maven.core>
 		<version.maven.plugin.annotation>3.6.4</version.maven.plugin.annotation>
@@ -81,25 +84,25 @@
 			<version>${version.yaml}</version>
 		</dependency>
 		<dependency>
-            <groupId>org.wildfly.channel</groupId>
-            <artifactId>channel-core</artifactId>
-            <version>${version.channel}</version>
-        </dependency>
+			<groupId>org.wildfly.channel</groupId>
+			<artifactId>channel-core</artifactId>
+			<version>${version.channel}</version>
+		</dependency>
 		<dependency>
 			<groupId>org.wildfly.channel</groupId>
 			<artifactId>maven-resolver</artifactId>
 			<version>${version.channel}</version>
 		</dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>json-schema-validator</artifactId>
-            <version>${version.json.schema.validators}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>${version.apache.commons.lang}</version>
-        </dependency>
+		<dependency>
+			<groupId>com.networknt</groupId>
+			<artifactId>json-schema-validator</artifactId>
+			<version>${version.json.schema.validators}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>${version.apache.commons.lang}</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<resources>
@@ -138,9 +141,10 @@
 						</goals>
 						<configuration>
 							<shadedArtifactAttached>true</shadedArtifactAttached>
-                            <shadedClassifierName>shaded</shadedClassifierName> <!-- Any name that makes sense -->
+							<shadedClassifierName>shaded</shadedClassifierName> <!-- Any name that makes sense -->
 							<transformers>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
 							</transformers>
 							<artifactSet>
 								<includes>
@@ -169,6 +173,48 @@
 				</configuration>
 			</plugin>
 		</plugins>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-checkstyle-plugin</artifactId>
+					<configuration>
+						<configLocation>wildfly-checkstyle/checkstyle.xml</configLocation>
+						<consoleOutput>true</consoleOutput>
+						<failsOnError>true</failsOnError>
+						<useFile />
+						<linkXRef>false</linkXRef>
+					</configuration>
+					<dependencies>
+						<dependency>
+							<groupId>com.puppycrawl.tools</groupId>
+							<artifactId>checkstyle</artifactId>
+							<version>${version.checkstyle}</version>
+							<exclusions>
+								<exclusion>
+									<groupId>com.sun</groupId>
+									<artifactId>tools</artifactId>
+								</exclusion>
+							</exclusions>
+						</dependency>
+						<dependency>
+							<groupId>org.wildfly.checkstyle</groupId>
+							<artifactId>wildfly-checkstyle-config</artifactId>
+							<version>${version.org.wildfly.checkstyle-config}</version>
+						</dependency>
+					</dependencies>
+					<executions>
+						<execution>
+							<id>check-style</id>
+							<phase>compile</phase>
+							<goals>
+								<goal>checkstyle</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 	<scm>
 		<connection>scm:git:git://github.com/jboss-set/maven-vbe.git</connection>

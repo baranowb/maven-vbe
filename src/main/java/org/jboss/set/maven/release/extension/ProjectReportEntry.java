@@ -51,7 +51,6 @@ public class ProjectReportEntry {
                 });
             }
         });
-        
     }
 
     public VBEVersionUpdate get(String id) {
